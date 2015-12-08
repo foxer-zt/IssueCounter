@@ -82,31 +82,38 @@ class Counter
         $data = [];
         foreach ($issues as $priority => $issueList) {
             foreach ($issueList as $key => $issue) {
-
-                // If issue without location:
-                if (!isset($issue['Location:'])) {
-                    $data['without_location'][] = key($issue);
-                    continue;
-                }
-                // If issue without type:
-                $type = isset($issue['Type:']) ? $issue['Type:'] : 'undefined';
-                if ($type == 'undefined') {
-                    $data['without_type'][] = key($issue);
-                }
+                $data = $this->checkIssuesFormating($issue, $data);
 
                 // Calculate number of issue occurrences:
                 $count = $this->calculateOccurrences($issue);
 
                 // Calculating issues by issue priority type.
-                $data['by_priority'][$priority] = 0;
-                $data['by_priority'][$priority] += $count;
-
+                @$data['by_priority'][$priority] += $count;
 
                 // Calculating issues by issue type.
-                $data['by_type'][$type] = 0;
-                $data['by_type'][$type] += $count;
+                @$data['by_type'][$issue['Type:']] += $count;
 
             }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Check issue for all necessary fields. Check for fields without data.
+     *
+     * @param array $issue
+     * @param array $data
+     * @return array
+     */
+    protected function checkIssuesFormating(array $issue, array &$data)
+    {
+        // If issue without location:
+        if (!isset($issue['Location:'])) {
+            $data['without_location'][] = key($issue);
+        }
+        if (count(array_keys($issue)) != count(array_filter(array_values($issue), 'trim'))) {
+            $data['empty_field'][] = key($issue);
         }
 
         return $data;
